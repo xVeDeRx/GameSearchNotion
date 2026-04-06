@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -9,313 +8,166 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-–bg: #0f0f0f;
-–surface: #1a1a1a;
-–border: #2a2a2a;
-–accent: #e8ff47;
-–text: #f0f0f0;
-–muted: #666;
-}
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #e8ff47;
+    --text: #f0f0f0;
+    --muted: #666;
+  }
 
-body {
-background: var(–bg);
-color: var(–text);
-font-family: ‘DM Sans’, sans-serif;
-min-height: 100vh;
-display: flex;
-align-items: center;
-justify-content: center;
-padding: 24px;
-overflow: hidden;
-}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
 
-#setup {
-width: 100%;
-max-width: 460px;
-}
+  #setup { width: 100%; max-width: 460px; }
 
-.setup-label {
-font-size: 11px;
-letter-spacing: .12em;
-text-transform: uppercase;
-color: var(–muted);
-margin-bottom: 6px;
-}
+  .setup-label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
 
-.setup-title {
-font-family: ‘Bebas Neue’, sans-serif;
-font-size: clamp(36px, 8vw, 56px);
-line-height: 1;
-color: var(–accent);
-margin-bottom: 28px;
-}
+  .setup-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 8vw, 56px);
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 28px;
+  }
 
-.field { margin-bottom: 16px; }
+  .field { margin-bottom: 16px; }
 
-label {
-display: block;
-font-size: 12px;
-letter-spacing: .08em;
-text-transform: uppercase;
-color: var(–muted);
-margin-bottom: 6px;
-}
+  label { display: block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
 
-input, select {
-width: 100%;
-background: var(–surface);
-border: 1px solid var(–border);
-color: var(–text);
-font-family: ‘DM Sans’, sans-serif;
-font-size: 14px;
-padding: 10px 14px;
-border-radius: 6px;
-outline: none;
-transition: border-color .2s;
-}
+  input, select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color .2s;
+  }
 
-input:focus, select:focus { border-color: var(–accent); }
-input::placeholder { color: var(–muted); }
+  input:focus, select:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
 
-.hint {
-font-size: 11px;
-color: var(–muted);
-margin-top: 5px;
-line-height: 1.5;
-}
+  .hint { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+  .hint a { color: var(--accent); text-decoration: none; }
 
-.hint a { color: var(–accent); text-decoration: none; }
+  .btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0f0f0f;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: .06em;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity .15s;
+  }
 
-.btn {
-width: 100%;
-background: var(–accent);
-color: #0f0f0f;
-border: none;
-font-family: ‘Bebas Neue’, sans-serif;
-font-size: 20px;
-letter-spacing: .06em;
-padding: 12px;
-border-radius: 6px;
-cursor: pointer;
-margin-top: 8px;
-transition: opacity .15s, transform .1s;
-}
+  .btn:hover { opacity: .9; }
 
-.btn:hover { opacity: .9; }
-.btn:active { transform: scale(.98); }
+  #error-msg { font-size: 13px; color: #ff6b6b; margin-top: 10px; min-height: 18px; }
 
-#widget {
-display: none;
-width: 100%;
-max-width: 440px;
-position: relative;
-}
+  #debug {
+    display: none;
+    width: 100%;
+    max-width: 460px;
+  }
 
-.tag {
-font-size: 10px;
-letter-spacing: .14em;
-text-transform: uppercase;
-color: var(–muted);
-margin-bottom: 10px;
-}
+  .debug-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
 
-.cover {
-width: 100%;
-aspect-ratio: 16/9;
-background: var(–surface);
-border-radius: 10px;
-overflow: hidden;
-margin-bottom: 18px;
-position: relative;
-border: 1px solid var(–border);
-}
+  .debug-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
 
-.cover img {
-width: 100%; height: 100%;
-object-fit: cover;
-display: block;
-}
+  .prop-list { list-style: none; margin-bottom: 24px; }
 
-.cover-placeholder {
-width: 100%; height: 100%;
-display: flex;
-align-items: center;
-justify-content: center;
-font-family: ‘Bebas Neue’, sans-serif;
-font-size: 64px;
-color: var(–border);
-letter-spacing: .05em;
-background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
-}
+  .prop-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    gap: 12px;
+  }
 
-.game-name {
-font-family: ‘Bebas Neue’, sans-serif;
-font-size: clamp(28px, 7vw, 44px);
-line-height: 1;
-margin-bottom: 10px;
-color: var(–text);
-}
+  .prop-name { font-size: 14px; font-weight: 500; }
 
-.meta {
-display: flex;
-gap: 8px;
-flex-wrap: wrap;
-margin-bottom: 20px;
-}
+  .prop-type {
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--bg);
+    padding: 3px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
 
-.chip {
-background: var(–surface);
-border: 1px solid var(–border);
-font-size: 11px;
-letter-spacing: .06em;
-text-transform: uppercase;
-padding: 4px 10px;
-border-radius: 20px;
-color: var(–muted);
-}
+  .prop-type.title { color: var(--accent); border: 1px solid var(--accent); }
 
-.chip.accent {
-background: var(–accent);
-border-color: var(–accent);
-color: #0f0f0f;
-font-weight: 500;
-}
+  .btn-back {
+    width: 100%;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 11px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
 
-.actions {
-display: flex;
-gap: 10px;
-}
-
-.btn-reroll {
-flex: 1;
-background: var(–accent);
-color: #0f0f0f;
-border: none;
-font-family: ‘Bebas Neue’, sans-serif;
-font-size: 18px;
-letter-spacing: .06em;
-padding: 11px;
-border-radius: 6px;
-cursor: pointer;
-transition: opacity .15s, transform .1s;
-}
-
-.btn-reroll:hover { opacity: .85; }
-.btn-reroll:active { transform: scale(.98); }
-
-.btn-open {
-background: var(–surface);
-color: var(–text);
-border: 1px solid var(–border);
-font-family: ‘DM Sans’, sans-serif;
-font-size: 13px;
-padding: 11px 18px;
-border-radius: 6px;
-cursor: pointer;
-text-decoration: none;
-display: flex;
-align-items: center;
-gap: 6px;
-transition: border-color .2s;
-white-space: nowrap;
-}
-
-.btn-open:hover { border-color: var(–accent); color: var(–accent); }
-
-.settings-link {
-position: absolute;
-top: -32px;
-right: 0;
-font-size: 11px;
-color: var(–muted);
-cursor: pointer;
-letter-spacing: .06em;
-text-transform: uppercase;
-text-decoration: none;
-}
-
-.settings-link:hover { color: var(–text); }
-
-.shimmer {
-background: linear-gradient(90deg, var(–surface) 25%, #222 50%, var(–surface) 75%);
-background-size: 200% 100%;
-animation: shimmer 1.4s infinite;
-border-radius: 4px;
-}
-
-@keyframes shimmer { to { background-position: -200% 0; } }
-
-#error-msg {
-font-size: 13px;
-color: #ff6b6b;
-margin-top: 10px;
-min-height: 18px;
-}
-
-.fade { animation: fadeIn .4s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .btn-back:hover { border-color: var(--accent); color: var(--accent); }
 </style>
-
 </head>
 <body>
 
-<!-- SETUP SCREEN -->
-
 <div id="setup">
-  <p class="setup-label">Notion Widget</p>
-  <h1 class="setup-title">Random<br>Game</h1>
+  <p class="setup-label">Notion Widget — Debug Mode</p>
+  <h1 class="setup-title">Find Your<br>Properties</h1>
 
   <div class="field">
     <label>Notion API Key</label>
     <input type="password" id="api-key" placeholder="secret_xxxxxxxxxxxx">
-    <p class="hint">Create one at <a href="https://www.notion.so/my-integrations" target="_blank">notion.so/my-integrations</a> → New integration → Read content</p>
   </div>
 
   <div class="field">
     <label>Database ID</label>
     <input type="text" id="db-id" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-    <p class="hint">From your DB URL: notion.so/&lt;workspace&gt;/<b>DATABASE_ID</b>?v=...</p>
-  </div>
-
-  <div class="field">
-    <label>Name property</label>
-    <input type="text" id="name-prop" placeholder="Game" value="Game">
-    <p class="hint">The exact name of your title column (case-sensitive). If unsure, leave as "Game" — it will auto-detect.</p>
-  </div>
-
-  <div class="field">
-    <label>Extra chip property (optional)</label>
-    <input type="text" id="chip-prop" placeholder="e.g. Genre, Status, Platform">
-  </div>
-
-  <div class="field">
-    <label>Refresh mode</label>
-    <select id="refresh-mode">
-      <option value="always">Every page load</option>
-      <option value="daily">Once per day</option>
-      <option value="weekly">Once per week</option>
-    </select>
   </div>
 
   <div id="error-msg"></div>
-  <button class="btn" onclick="saveAndLoad()">Load Widget →</button>
+  <button class="btn" onclick="fetchProps()">Show My Properties →</button>
 </div>
 
-<!-- WIDGET SCREEN -->
-
-<div id="widget">
-  <a class="settings-link" onclick="showSetup()">⚙ settings</a>
-  <p class="tag" id="w-tag">🎮 Random Game</p>
-  <div class="cover" id="w-cover">
-    <div class="cover-placeholder" id="w-placeholder">?</div>
-  </div>
-  <div class="game-name" id="w-name">—</div>
-  <div class="meta" id="w-meta"></div>
-  <div class="actions">
-    <button class="btn-reroll" onclick="reroll()">↻ Reroll</button>
-    <a class="btn-open" id="w-link" href="#" target="_blank">Open in Notion ↗</a>
-  </div>
+<div id="debug">
+  <p class="setup-label">Your database properties</p>
+  <h2 class="debug-title">Pick Your<br>Name Field</h2>
+  <p class="debug-sub">The one highlighted in <span style="color:var(--accent)">yellow</span> is the <b>title</b> type — that's most likely your game name field. Tell me its exact name and I'll update the widget!</p>
+  <ul class="prop-list" id="prop-list"></ul>
+  <button class="btn-back" onclick="goBack()">← Back</button>
 </div>
 
 <script>
@@ -325,213 +177,59 @@ function notionUrl(path) {
   return PROXY + encodeURIComponent("https://api.notion.com/v1" + path);
 }
 
-function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
-function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch(e){ return null; } }
+async function fetchProps() {
+  const apiKey = document.getElementById("api-key").value.trim();
+  const dbId   = document.getElementById("db-id").value.trim();
+  const errEl  = document.getElementById("error-msg");
+  errEl.textContent = "";
 
-function getConfig() { return load("ngw_config") || {}; }
-function saveConfig(c) { save("ngw_config", c); }
+  if (!apiKey || !dbId) { errEl.textContent = "Both fields are required."; return; }
 
-function getCachedGame(mode) {
-  if (mode === "always") return null;
-  const cached = load("ngw_cache");
-  if (!cached) return null;
-  const age = Date.now() - cached.ts;
-  if (mode === "daily" && age < 86400000) return cached.game;
-  if (mode === "weekly" && age < 604800000) return cached.game;
-  return null;
-}
+  errEl.textContent = "Loading...";
+  errEl.style.color = "var(--muted)";
 
-function setCachedGame(game) { save("ngw_cache", { ts: Date.now(), game }); }
-
-async function fetchAllGames(apiKey, dbId) {
-  let games = [], cursor = undefined, tries = 0;
-  while (true) {
-    const body = { page_size: 100 };
-    if (cursor) body.start_cursor = cursor;
-    const res = await fetch(notionUrl(`/databases/${dbId}/query`), {
-      method: "POST",
+  try {
+    const res = await fetch(notionUrl(`/databases/${dbId}`), {
       headers: {
         "Authorization": "Bearer " + apiKey,
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
+        "Notion-Version": "2022-06-28"
+      }
     });
+
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.message || "API error " + res.status);
     }
+
     const data = await res.json();
-    games = games.concat(data.results);
-    if (!data.has_more || ++tries > 10) break;
-    cursor = data.next_cursor;
-  }
-  return games;
-}
+    const props = data.properties;
 
-function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    const list = document.getElementById("prop-list");
+    list.innerHTML = "";
 
-function extractText(prop) {
-  if (!prop) return "";
-  if (prop.type === "title") return prop.title.map(t => t.plain_text).join("") || "";
-  if (prop.type === "rich_text") return prop.rich_text.map(t => t.plain_text).join("") || "";
-  if (prop.type === "select") return prop.select?.name || "";
-  if (prop.type === "multi_select") return prop.multi_select.map(s => s.name).join(", ");
-  if (prop.type === "number") return prop.number?.toString() || "";
-  if (prop.type === "date") return prop.date?.start || "";
-  if (prop.type === "checkbox") return prop.checkbox ? "✓" : "";
-  if (prop.type === "url") return prop.url || "";
-  return "";
-}
+    Object.entries(props).forEach(([name, prop]) => {
+      const li = document.createElement("li");
+      li.className = "prop-item";
+      li.innerHTML = `
+        <span class="prop-name">${name}</span>
+        <span class="prop-type ${prop.type === 'title' ? 'title' : ''}">${prop.type}</span>
+      `;
+      list.appendChild(li);
+    });
 
-function extractName(page, nameProp) {
-  // Try the specified property name first
-  if (page.properties[nameProp]) {
-    const val = extractText(page.properties[nameProp]);
-    if (val) return val;
-  }
-  // Auto-detect: find any title-type property
-  for (const key of Object.keys(page.properties)) {
-    if (page.properties[key].type === "title") {
-      const val = extractText(page.properties[key]);
-      if (val) return val;
-    }
-  }
-  return "Unknown";
-}
+    document.getElementById("setup").style.display = "none";
+    document.getElementById("debug").style.display = "block";
 
-function extractCover(page) {
-  if (!page.cover) return null;
-  if (page.cover.type === "external") return page.cover.external.url;
-  if (page.cover.type === "file") return page.cover.file.url;
-  return null;
-}
-
-function renderGame(game, config) {
-  const nameProp = config.nameProp || "Game";
-  const chipProp = config.chipProp;
-
-  const name = extractName(game, nameProp);
-  const cover = extractCover(game);
-  const url = game.url;
-
-  const nameEl = document.getElementById("w-name");
-  nameEl.textContent = name;
-  nameEl.classList.remove("fade");
-  void nameEl.offsetWidth;
-  nameEl.classList.add("fade");
-
-  const coverEl = document.getElementById("w-cover");
-  coverEl.innerHTML = "";
-  if (cover) {
-    const img = document.createElement("img");
-    img.src = cover;
-    img.alt = name;
-    img.onerror = () => {
-      coverEl.innerHTML = `<div class="cover-placeholder">${name[0] || "?"}</div>`;
-    };
-    coverEl.appendChild(img);
-  } else {
-    const ph = document.createElement("div");
-    ph.className = "cover-placeholder";
-    ph.textContent = name[0] || "?";
-    coverEl.appendChild(ph);
-  }
-  coverEl.classList.remove("fade");
-  void coverEl.offsetWidth;
-  coverEl.classList.add("fade");
-
-  const meta = document.getElementById("w-meta");
-  meta.innerHTML = "";
-  if (chipProp && game.properties[chipProp]) {
-    const val = extractText(game.properties[chipProp]);
-    if (val) {
-      val.split(", ").forEach(v => {
-        const c = document.createElement("span");
-        c.className = "chip accent";
-        c.textContent = v;
-        meta.appendChild(c);
-      });
-    }
-  }
-
-  document.getElementById("w-link").href = url || "#";
-
-  const mode = config.refreshMode;
-  document.getElementById("w-tag").textContent =
-    mode === "daily"  ? "🎮 Game of the Day" :
-    mode === "weekly" ? "🎮 Game of the Week" :
-                        "🎮 Random Game";
-}
-
-async function loadWidget(config, forceReroll) {
-  document.getElementById("setup").style.display = "none";
-  document.getElementById("widget").style.display = "block";
-
-  if (!forceReroll) {
-    const cached = getCachedGame(config.refreshMode);
-    if (cached) { renderGame(cached, config); return; }
-  }
-
-  document.getElementById("w-name").textContent = "Loading...";
-  document.getElementById("w-meta").innerHTML = "";
-  document.getElementById("w-cover").innerHTML =
-    `<div class="cover-placeholder shimmer" style="width:100%;height:100%"></div>`;
-
-  try {
-    const games = await fetchAllGames(config.apiKey, config.dbId);
-    if (!games.length) throw new Error("No entries found in database.");
-    const game = pickRandom(games);
-    setCachedGame(game);
-    renderGame(game, config);
-  } catch (err) {
-    document.getElementById("w-name").textContent = "Error";
-    document.getElementById("w-meta").innerHTML =
-      `<span style="color:#ff6b6b;font-size:13px">${err.message}</span>`;
+  } catch(err) {
+    errEl.textContent = err.message;
+    errEl.style.color = "#ff6b6b";
   }
 }
 
-async function reroll() {
-  await loadWidget(getConfig(), true);
-}
-
-function showSetup() {
-  const c = getConfig();
-  document.getElementById("api-key").value = c.apiKey || "";
-  document.getElementById("db-id").value = c.dbId || "";
-  document.getElementById("name-prop").value = c.nameProp || "Game";
-  document.getElementById("chip-prop").value = c.chipProp || "";
-  document.getElementById("refresh-mode").value = c.refreshMode || "always";
-  document.getElementById("widget").style.display = "none";
+function goBack() {
+  document.getElementById("debug").style.display = "none";
   document.getElementById("setup").style.display = "block";
 }
-
-async function saveAndLoad() {
-  const apiKey      = document.getElementById("api-key").value.trim();
-  const dbId        = document.getElementById("db-id").value.trim();
-  const nameProp    = document.getElementById("name-prop").value.trim() || "Game";
-  const chipProp    = document.getElementById("chip-prop").value.trim();
-  const refreshMode = document.getElementById("refresh-mode").value;
-  const errEl       = document.getElementById("error-msg");
-  errEl.textContent = "";
-
-  if (!apiKey || !dbId) {
-    errEl.textContent = "API key and Database ID are required.";
-    return;
-  }
-
-  const config = { apiKey, dbId, nameProp, chipProp, refreshMode };
-  saveConfig(config);
-  await loadWidget(config, true);
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  const config = getConfig();
-  if (config.apiKey && config.dbId) {
-    loadWidget(config, false);
-  }
-});
 </script>
-
 </body>
 </html>
