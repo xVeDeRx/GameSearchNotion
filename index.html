@@ -1,477 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Notion Search</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<title>Search</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #f5f3ee;
-    --surface: #ffffff;
-    --border: #e2ddd6;
-    --ink: #1a1814;
-    --muted: #8a867e;
-    --accent: #c9622f;
-    --accent-light: #f5ede7;
-    --shadow: 0 2px 12px rgba(26,24,20,0.08);
-    --radius: 10px;
-  }
-
   body {
-    font-family: 'Syne', sans-serif;
-    background: var(--bg);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 48px 20px 80px;
-    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    background: #fff;
+    padding: 20px;
+    color: #111;
   }
 
-  .container {
-    width: 100%;
-    max-width: 620px;
+  .search-wrap {
+    position: relative;
+    margin-bottom: 12px;
   }
 
-  .header {
-    margin-bottom: 32px;
-    text-align: center;
-  }
-
-  .header h1 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--ink);
-  }
-
-  .header p {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--muted);
-    margin-top: 6px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  /* Config panel */
-  .config-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    margin-bottom: 28px;
-    box-shadow: var(--shadow);
-  }
-
-  .config-panel h2 {
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 16px;
-  }
-
-  .field-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .field-group label {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--ink);
-    display: block;
-    margin-bottom: 5px;
-  }
-
-  .field-group input {
+  input {
     width: 100%;
     padding: 10px 14px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.8rem;
-    border: 1.5px solid var(--border);
-    border-radius: 7px;
-    background: var(--bg);
-    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.88rem;
+    border: 1.5px solid #ddd;
+    border-radius: 6px;
     outline: none;
+    color: #111;
+    background: #fff;
     transition: border-color 0.15s;
   }
 
-  .field-group input:focus {
-    border-color: var(--accent);
-  }
+  input:focus { border-color: #111; }
+  input::placeholder { color: #bbb; }
 
-  .field-group input::placeholder {
-    color: #bbb8b2;
-  }
-
-  .save-btn {
-    margin-top: 16px;
-    width: 100%;
-    padding: 11px;
-    background: var(--ink);
-    color: #fff;
-    border: none;
-    border-radius: 7px;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    letter-spacing: 0.02em;
-    transition: background 0.15s, transform 0.1s;
-  }
-
-  .save-btn:hover { background: #333; }
-  .save-btn:active { transform: scale(0.98); }
-
-  /* Search area */
-  .search-wrap {
-    position: relative;
-    margin-bottom: 20px;
-  }
-
-  .search-input {
-    width: 100%;
-    padding: 14px 50px 14px 20px;
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 400;
-    border: 2px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    color: var(--ink);
-    outline: none;
-    box-shadow: var(--shadow);
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-
-  .search-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px var(--accent-light), var(--shadow);
-  }
-
-  .search-input::placeholder { color: #c0bbb4; }
-
-  .search-icon {
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    pointer-events: none;
-  }
-
-  /* Status */
   .status {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-bottom: 14px;
-    min-height: 18px;
-    letter-spacing: 0.02em;
+    font-size: 0.7rem;
+    color: #aaa;
+    margin-bottom: 10px;
+    min-height: 16px;
   }
 
   .status.error { color: #c0392b; }
 
-  /* Results */
-  .results {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
+  .results { display: flex; flex-direction: column; gap: 6px; }
 
-  .result-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 20px;
+  a.result {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    box-shadow: var(--shadow);
+    padding: 9px 12px;
+    border: 1px solid #eee;
+    border-radius: 6px;
     text-decoration: none;
-    color: inherit;
-    transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
-    animation: fadeUp 0.2s ease both;
+    color: #111;
+    font-size: 0.84rem;
+    transition: border-color 0.12s, background 0.12s;
+    animation: fadeIn 0.15s ease both;
   }
 
-  .result-card:hover {
-    border-color: var(--accent);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(26,24,20,0.1);
+  a.result:hover { border-color: #111; background: #f9f9f9; }
+
+  .arrow { color: #bbb; font-size: 0.8rem; }
+  a.result:hover .arrow { color: #111; }
+
+  .empty {
+    font-size: 0.78rem;
+    color: #bbb;
+    padding: 12px 0;
   }
 
-  .result-name {
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    flex: 1;
-  }
-
-  .result-arrow {
-    color: var(--accent);
-    font-size: 1rem;
-    flex-shrink: 0;
-    transition: transform 0.15s;
-  }
-
-  .result-card:hover .result-arrow { transform: translateX(3px); }
-
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 0.8rem;
-    letter-spacing: 0.03em;
-  }
-
-  .loader {
-    display: flex;
-    justify-content: center;
-    padding: 32px;
-    gap: 6px;
-  }
-
-  .loader span {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: bounce 0.6s infinite alternate;
-  }
-
-  .loader span:nth-child(2) { animation-delay: 0.15s; }
-  .loader span:nth-child(3) { animation-delay: 0.3s; }
-
-  @keyframes bounce {
-    from { transform: translateY(0); opacity: 0.4; }
-    to   { transform: translateY(-8px); opacity: 1; }
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(6px); }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-
-  .notice {
-    background: var(--accent-light);
-    border: 1px solid #e8c4b0;
-    border-radius: 8px;
-    padding: 14px 18px;
-    font-size: 0.8rem;
-    line-height: 1.6;
-    color: #7a3a18;
-    margin-bottom: 20px;
-  }
-
-  .notice strong { font-weight: 700; }
-
-  .toggle-config {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--muted);
-    background: none;
-    border: none;
-    cursor: pointer;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    display: block;
-    margin: 0 auto 20px;
-    padding: 4px 8px;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  .toggle-config:hover { color: var(--accent); }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="header">
-    <h1>Database Search</h1>
-    <p>Powered by Notion API</p>
-  </div>
-
-  <div class="notice">
-    <strong>First time setup:</strong> Enter your Notion Integration Token and Database ID below, then click Save. These are stored only in your browser.
-  </div>
-
-  <div class="config-panel" id="configPanel">
-    <h2>Configuration</h2>
-    <div class="field-group">
-      <div>
-        <label>Integration Token</label>
-        <input type="password" id="tokenInput" placeholder="secret_xxxxxxxxxxxxxxxxxxxx" />
-      </div>
-      <div>
-        <label>Database ID</label>
-        <input type="text" id="dbInput" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
-      </div>
-    </div>
-    <button class="save-btn" onclick="saveConfig()">Save & Start Searching</button>
-  </div>
-
-  <button class="toggle-config" id="toggleBtn" style="display:none" onclick="toggleConfig()">⚙ Edit config</button>
-
-  <div class="search-wrap">
-    <input
-      class="search-input"
-      id="searchInput"
-      type="text"
-      placeholder="Search by name…"
-      oninput="onSearch()"
-      autocomplete="off"
-    />
-    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-  </div>
-
-  <div class="status" id="status"></div>
-  <div class="results" id="results"></div>
+<div class="search-wrap">
+  <input type="text" id="q" placeholder="Search by name…" oninput="onInput()" autocomplete="off"/>
 </div>
+<div class="status" id="status"></div>
+<div class="results" id="results"></div>
 
 <script>
-  const PROXY = "https://api.allorigins.win/raw?url=";
+  let timer = null;
 
-  let config = { token: '', dbId: '' };
-  let debounceTimer = null;
-
-  // Load saved config
-  (function init() {
-    const saved = localStorage.getItem('notion_search_config');
-    if (saved) {
-      config = JSON.parse(saved);
-      document.getElementById('tokenInput').value = config.token;
-      document.getElementById('dbInput').value = config.dbId;
-      if (config.token && config.dbId) {
-        document.getElementById('configPanel').style.display = 'none';
-        document.getElementById('toggleBtn').style.display = 'block';
-      }
-    }
-  })();
-
-  function saveConfig() {
-    config.token = document.getElementById('tokenInput').value.trim();
-    config.dbId  = document.getElementById('dbInput').value.trim();
-    if (!config.token || !config.dbId) {
-      setStatus('Please fill in both fields.', true);
-      return;
-    }
-    localStorage.setItem('notion_search_config', JSON.stringify(config));
-    document.getElementById('configPanel').style.display = 'none';
-    document.getElementById('toggleBtn').style.display = 'block';
-    setStatus('Config saved. Start typing to search!');
+  function onInput() {
+    clearTimeout(timer);
+    timer = setTimeout(search, 300);
   }
 
-  function toggleConfig() {
-    const panel = document.getElementById('configPanel');
-    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-  }
+  async function search() {
+    const q = document.getElementById('q').value.trim();
+    const status  = document.getElementById('status');
+    const results = document.getElementById('results');
 
-  function setStatus(msg, isError = false) {
-    const el = document.getElementById('status');
-    el.textContent = msg;
-    el.className = 'status' + (isError ? ' error' : '');
-  }
+    if (!q) { status.textContent = ''; results.innerHTML = ''; return; }
 
-  function onSearch() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(doSearch, 320);
-  }
-
-  async function doSearch() {
-    const query = document.getElementById('searchInput').value.trim();
-
-    if (!config.token || !config.dbId) {
-      setStatus('Please configure your Notion token and database ID first.', true);
-      return;
-    }
-
-    if (!query) {
-      document.getElementById('results').innerHTML = '';
-      setStatus('');
-      return;
-    }
-
-    setStatus('Searching…');
-    document.getElementById('results').innerHTML = `
-      <div class="loader">
-        <span></span><span></span><span></span>
-      </div>`;
-
-    const body = {
-      filter: {
-        property: "Name",
-        title: { contains: query }
-      },
-      page_size: 20
-    };
-
-    const apiUrl = `https://api.notion.com/v1/databases/${config.dbId}/query`;
+    status.textContent = 'Searching…';
+    status.className = 'status';
+    results.innerHTML = '';
 
     try {
-      // Use allorigins proxy to bypass CORS from browser
-      const proxied = PROXY + encodeURIComponent(apiUrl);
-      const res = await fetch(proxied, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Notion-Version": "2022-06-28",
-          "Authorization": `Bearer ${config.token}`
-        },
-        body: JSON.stringify(body)
+      const res = await fetch('/.netlify/functions/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q })
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || `Error ${res.status}`);
+
+      const pages = data.results || [];
+
+      if (pages.length === 0) {
+        status.textContent = '';
+        results.innerHTML = `<div class="empty">No results for "${q}"</div>`;
+        return;
       }
 
-      const data = await res.json();
-      renderResults(data.results, query);
-    } catch (e) {
-      document.getElementById('results').innerHTML = '';
-      setStatus(`Error: ${e.message}`, true);
-    }
-  }
+      status.textContent = `${pages.length} result${pages.length !== 1 ? 's' : ''}`;
 
-  function renderResults(pages, query) {
-    const container = document.getElementById('results');
-
-    if (!pages || pages.length === 0) {
-      container.innerHTML = `<div class="empty-state">No results for "${query}"</div>`;
-      setStatus('');
-      return;
-    }
-
-    setStatus(`${pages.length} result${pages.length !== 1 ? 's' : ''} found`);
-
-    container.innerHTML = pages.map((page, i) => {
-      const titleProp = page.properties?.Name?.title;
-      const name = titleProp && titleProp.length > 0
-        ? titleProp.map(t => t.plain_text).join('')
-        : '(Untitled)';
-      const url = page.url || '#';
-
-      return `
-        <a class="result-card" href="${url}" target="_blank" rel="noopener" style="animation-delay:${i * 0.04}s">
-          <span class="result-name">${escapeHtml(name)}</span>
-          <span class="result-arrow">→</span>
+      results.innerHTML = pages.map((page, i) => {
+        const title = page.properties?.Name?.title?.map(t => t.plain_text).join('') || '(Untitled)';
+        const url   = page.url || '#';
+        return `<a class="result" href="${url}" target="_blank" rel="noopener" style="animation-delay:${i*0.03}s">
+          <span>${esc(title)}</span>
+          <span class="arrow">↗</span>
         </a>`;
-    }).join('');
+      }).join('');
+
+    } catch (e) {
+      status.textContent = `Error: ${e.message}`;
+      status.className = 'status error';
+    }
   }
 
-  function escapeHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 </script>
 </body>
