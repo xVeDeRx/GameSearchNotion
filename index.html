@@ -81,7 +81,7 @@
 <body>
 
 <div class="search-wrap">
-  <input type="text" id="q" placeholder="Search by name…" oninput="onInput()" autocomplete="off"/>
+  <input type="text" id="q" placeholder="Search Game…" oninput="onInput()" autocomplete="off"/>
 </div>
 <div class="status" id="status"></div>
 <div class="results" id="results"></div>
@@ -127,7 +127,7 @@
       status.textContent = `${pages.length} result${pages.length !== 1 ? 's' : ''}`;
 
       results.innerHTML = pages.map((page, i) => {
-        const title = page.properties?.Name?.title?.map(t => t.plain_text).join('') || '(Untitled)';
+        const title = page.properties?.Game?.title?.map(t => t.plain_text).join('') || '(Untitled)';
         const url   = page.url || '#';
         return `<a class="result" href="${url}" target="_blank" rel="noopener" style="animation-delay:${i*0.03}s">
           <span>${esc(title)}</span>
