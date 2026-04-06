@@ -32,7 +32,7 @@ exports.handler = async function (event) {
       },
       body: JSON.stringify({
         filter: {
-          property: "Name",
+          property: "Game",
           title: { contains: query }
         },
         page_size: 25
