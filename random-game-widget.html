@@ -30,7 +30,6 @@ padding: 24px;
 overflow: hidden;
 }
 
-/* ── Setup screen ── */
 #setup {
 width: 100%;
 max-width: 460px;
@@ -77,7 +76,6 @@ transition: border-color .2s;
 }
 
 input:focus, select:focus { border-color: var(–accent); }
-
 input::placeholder { color: var(–muted); }
 
 .hint {
@@ -107,7 +105,6 @@ transition: opacity .15s, transform .1s;
 .btn:hover { opacity: .9; }
 .btn:active { transform: scale(.98); }
 
-/* ── Widget screen ── */
 #widget {
 display: none;
 width: 100%;
@@ -240,7 +237,6 @@ text-decoration: none;
 
 .settings-link:hover { color: var(–text); }
 
-/* ── Loading state ── */
 .shimmer {
 background: linear-gradient(90deg, var(–surface) 25%, #222 50%, var(–surface) 75%);
 background-size: 200% 100%;
@@ -257,7 +253,6 @@ margin-top: 10px;
 min-height: 18px;
 }
 
-/* ── Fade transition ── */
 .fade { animation: fadeIn .4s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 </style>
@@ -285,7 +280,8 @@ min-height: 18px;
 
   <div class="field">
     <label>Name property</label>
-    <input type="text" id="name-prop" placeholder="Name" value="Game">
+    <input type="text" id="name-prop" placeholder="Game" value="Game">
+    <p class="hint">The exact name of your title column (case-sensitive). If unsure, leave as "Game" — it will auto-detect.</p>
   </div>
 
   <div class="field">
@@ -310,7 +306,7 @@ min-height: 18px;
 
 <div id="widget">
   <a class="settings-link" onclick="showSetup()">⚙ settings</a>
-  <p class="tag" id="w-tag">🎮 Game of the Day</p>
+  <p class="tag" id="w-tag">🎮 Random Game</p>
   <div class="cover" id="w-cover">
     <div class="cover-placeholder" id="w-placeholder">?</div>
   </div>
@@ -323,29 +319,23 @@ min-height: 18px;
 </div>
 
 <script>
-// ── Proxy (bypasses Notion CORS) ──────────────────────────────────────────
 const PROXY = "https://corsproxy.io/?url=";
 
 function notionUrl(path) {
   return PROXY + encodeURIComponent("https://api.notion.com/v1" + path);
 }
 
-// ── Storage helpers ───────────────────────────────────────────────────────
 function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
 function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch(e){ return null; } }
 
-// ── Config ────────────────────────────────────────────────────────────────
 function getConfig() { return load("ngw_config") || {}; }
-
 function saveConfig(c) { save("ngw_config", c); }
 
-// ── Cache helpers (daily/weekly) ─────────────────────────────────────────
 function getCachedGame(mode) {
   if (mode === "always") return null;
   const cached = load("ngw_cache");
   if (!cached) return null;
-  const now = Date.now();
-  const age = now - cached.ts;
+  const age = Date.now() - cached.ts;
   if (mode === "daily" && age < 86400000) return cached.game;
   if (mode === "weekly" && age < 604800000) return cached.game;
   return null;
@@ -353,7 +343,6 @@ function getCachedGame(mode) {
 
 function setCachedGame(game) { save("ngw_cache", { ts: Date.now(), game }); }
 
-// ── API call ──────────────────────────────────────────────────────────────
 async function fetchAllGames(apiKey, dbId) {
   let games = [], cursor = undefined, tries = 0;
   while (true) {
@@ -380,7 +369,6 @@ async function fetchAllGames(apiKey, dbId) {
   return games;
 }
 
-// ── Pick a random entry ───────────────────────────────────────────────────
 function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function extractText(prop) {
@@ -396,6 +384,22 @@ function extractText(prop) {
   return "";
 }
 
+function extractName(page, nameProp) {
+  // Try the specified property name first
+  if (page.properties[nameProp]) {
+    const val = extractText(page.properties[nameProp]);
+    if (val) return val;
+  }
+  // Auto-detect: find any title-type property
+  for (const key of Object.keys(page.properties)) {
+    if (page.properties[key].type === "title") {
+      const val = extractText(page.properties[key]);
+      if (val) return val;
+    }
+  }
+  return "Unknown";
+}
+
 function extractCover(page) {
   if (!page.cover) return null;
   if (page.cover.type === "external") return page.cover.external.url;
@@ -403,35 +407,40 @@ function extractCover(page) {
   return null;
 }
 
-// ── Render widget ─────────────────────────────────────────────────────────
 function renderGame(game, config) {
-  const nameProp = config.nameProp || "Name";
+  const nameProp = config.nameProp || "Game";
   const chipProp = config.chipProp;
 
-  const name = extractText(game.properties[nameProp]) || "Unknown";
+  const name = extractName(game, nameProp);
   const cover = extractCover(game);
   const url = game.url;
 
-  document.getElementById("w-name").textContent = name;
-  document.getElementById("w-name").classList.add("fade");
+  const nameEl = document.getElementById("w-name");
+  nameEl.textContent = name;
+  nameEl.classList.remove("fade");
+  void nameEl.offsetWidth;
+  nameEl.classList.add("fade");
 
-  // Cover
   const coverEl = document.getElementById("w-cover");
-  const ph = document.getElementById("w-placeholder");
   coverEl.innerHTML = "";
   if (cover) {
     const img = document.createElement("img");
     img.src = cover;
     img.alt = name;
-    img.onerror = () => { coverEl.innerHTML = `<div class="cover-placeholder">${name[0]}</div>`; };
+    img.onerror = () => {
+      coverEl.innerHTML = `<div class="cover-placeholder">${name[0] || "?"}</div>`;
+    };
     coverEl.appendChild(img);
   } else {
+    const ph = document.createElement("div");
+    ph.className = "cover-placeholder";
     ph.textContent = name[0] || "?";
     coverEl.appendChild(ph);
   }
+  coverEl.classList.remove("fade");
+  void coverEl.offsetWidth;
   coverEl.classList.add("fade");
 
-  // Meta chips
   const meta = document.getElementById("w-meta");
   meta.innerHTML = "";
   if (chipProp && game.properties[chipProp]) {
@@ -446,18 +455,15 @@ function renderGame(game, config) {
     }
   }
 
-  // Link
   document.getElementById("w-link").href = url || "#";
 
-  // Tag label
   const mode = config.refreshMode;
   document.getElementById("w-tag").textContent =
-    mode === "daily" ? "🎮 Game of the Day" :
+    mode === "daily"  ? "🎮 Game of the Day" :
     mode === "weekly" ? "🎮 Game of the Week" :
-    "🎮 Random Game";
+                        "🎮 Random Game";
 }
 
-// ── Main load logic ───────────────────────────────────────────────────────
 async function loadWidget(config, forceReroll) {
   document.getElementById("setup").style.display = "none";
   document.getElementById("widget").style.display = "block";
@@ -467,10 +473,10 @@ async function loadWidget(config, forceReroll) {
     if (cached) { renderGame(cached, config); return; }
   }
 
-  // Show loading state
   document.getElementById("w-name").textContent = "Loading...";
   document.getElementById("w-meta").innerHTML = "";
-  document.getElementById("w-cover").innerHTML = `<div class="cover-placeholder shimmer" style="width:100%;height:100%"></div>`;
+  document.getElementById("w-cover").innerHTML =
+    `<div class="cover-placeholder shimmer" style="width:100%;height:100%"></div>`;
 
   try {
     const games = await fetchAllGames(config.apiKey, config.dbId);
@@ -480,20 +486,20 @@ async function loadWidget(config, forceReroll) {
     renderGame(game, config);
   } catch (err) {
     document.getElementById("w-name").textContent = "Error";
-    document.getElementById("w-meta").innerHTML = `<span style="color:#ff6b6b;font-size:13px">${err.message}</span>`;
+    document.getElementById("w-meta").innerHTML =
+      `<span style="color:#ff6b6b;font-size:13px">${err.message}</span>`;
   }
 }
 
 async function reroll() {
-  const config = getConfig();
-  await loadWidget(config, true);
+  await loadWidget(getConfig(), true);
 }
 
 function showSetup() {
   const c = getConfig();
   document.getElementById("api-key").value = c.apiKey || "";
   document.getElementById("db-id").value = c.dbId || "";
-  document.getElementById("name-prop").value = c.nameProp || "Name";
+  document.getElementById("name-prop").value = c.nameProp || "Game";
   document.getElementById("chip-prop").value = c.chipProp || "";
   document.getElementById("refresh-mode").value = c.refreshMode || "always";
   document.getElementById("widget").style.display = "none";
@@ -501,22 +507,24 @@ function showSetup() {
 }
 
 async function saveAndLoad() {
-  const apiKey = document.getElementById("api-key").value.trim();
-  const dbId = document.getElementById("db-id").value.trim();
-  const nameProp = document.getElementById("name-prop").value.trim() || "Name";
-  const chipProp = document.getElementById("chip-prop").value.trim();
+  const apiKey      = document.getElementById("api-key").value.trim();
+  const dbId        = document.getElementById("db-id").value.trim();
+  const nameProp    = document.getElementById("name-prop").value.trim() || "Game";
+  const chipProp    = document.getElementById("chip-prop").value.trim();
   const refreshMode = document.getElementById("refresh-mode").value;
-  const errEl = document.getElementById("error-msg");
+  const errEl       = document.getElementById("error-msg");
   errEl.textContent = "";
 
-  if (!apiKey || !dbId) { errEl.textContent = "API key and Database ID are required."; return; }
+  if (!apiKey || !dbId) {
+    errEl.textContent = "API key and Database ID are required.";
+    return;
+  }
 
   const config = { apiKey, dbId, nameProp, chipProp, refreshMode };
   saveConfig(config);
   await loadWidget(config, true);
 }
 
-// ── Auto-start if config saved ────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
   const config = getConfig();
   if (config.apiKey && config.dbId) {
