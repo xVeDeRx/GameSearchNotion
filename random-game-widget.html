@@ -9,7 +9,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: #000;
+    background: transparent;
     color: #f0f0f0;
     font-family: 'DM Sans', sans-serif;
     min-height: 100vh;
@@ -20,7 +20,13 @@
   }
 
   /* Setup screen */
-  #setup { width: 100%; max-width: 420px; }
+  #setup {
+    width: 100%;
+    max-width: 420px;
+    background: #111;
+    padding: 28px;
+    border-radius: 12px;
+  }
 
   .setup-title {
     font-family: 'Bebas Neue', sans-serif;
@@ -43,7 +49,7 @@
 
   input, select {
     width: 100%;
-    background: #111;
+    background: #1a1a1a;
     border: 1px solid #222;
     color: #f0f0f0;
     font-family: 'DM Sans', sans-serif;
@@ -81,15 +87,13 @@
     display: none;
     width: 100%;
     max-width: 420px;
-    cursor: pointer;
-    user-select: none;
   }
 
   .w-tag {
     font-size: 10px;
     letter-spacing: .16em;
     text-transform: uppercase;
-    color: #333;
+    color: #888;
     margin-bottom: 14px;
     text-align: center;
   }
@@ -99,8 +103,9 @@
     aspect-ratio: 16/9;
     border-radius: 10px;
     overflow: hidden;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     background: #111;
+    cursor: pointer;
   }
 
   .w-cover img {
@@ -108,7 +113,10 @@
     height: 100%;
     object-fit: cover;
     display: block;
+    transition: transform .3s ease;
   }
+
+  .w-cover:hover img { transform: scale(1.02); }
 
   .w-cover-placeholder {
     width: 100%;
@@ -118,8 +126,8 @@
     justify-content: center;
     font-family: 'Bebas Neue', sans-serif;
     font-size: 72px;
-    color: #1a1a1a;
-    background: linear-gradient(135deg, #111 0%, #0a0a0a 100%);
+    color: #222;
+    background: #111;
   }
 
   .w-name {
@@ -129,25 +137,35 @@
     color: #f0f0f0;
     margin-bottom: 6px;
     text-align: center;
+    text-decoration: none;
+    display: block;
+    cursor: pointer;
+    transition: color .2s;
   }
+
+  .w-name:hover { color: #e8ff47; }
 
   .w-system {
     font-size: 14px;
-    color: #444;
+    color: #888;
     letter-spacing: .04em;
     text-align: center;
+    margin-bottom: 18px;
+    min-height: 20px;
   }
 
   .w-system span { color: #e8ff47; }
 
   .w-hint {
-    margin-top: 20px;
     font-size: 10px;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: #1a1a1a;
+    color: #333;
     text-align: center;
+    cursor: pointer;
   }
+
+  .w-hint:hover { color: #555; }
 
   .shimmer {
     background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
@@ -167,14 +185,14 @@
     font-size: 10px;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: #1a1a1a;
+    color: #222;
     cursor: pointer;
     background: none;
     border: none;
     transition: color .2s;
   }
 
-  .settings-btn:hover { color: #444; }
+  .settings-btn:hover { color: #555; }
 </style>
 </head>
 <body>
@@ -207,17 +225,17 @@
 </div>
 
 <!-- WIDGET -->
-<div id="widget" onclick="reroll()">
+<div id="widget">
   <p class="w-tag" id="w-tag">🎮 Random Game</p>
-  <div class="w-cover" id="w-cover">
+  <div class="w-cover" id="w-cover" onclick="reroll()">
     <div class="w-cover-placeholder">?</div>
   </div>
-  <div class="w-name" id="w-name">—</div>
+  <a class="w-name" id="w-name" href="#" target="_blank">—</a>
   <div class="w-system" id="w-system"></div>
-  <p class="w-hint">tap to reroll</p>
+  <p class="w-hint" onclick="reroll()">↻ tap to reroll</p>
 </div>
 
-<button class="settings-btn" id="settings-btn" style="display:none" onclick="event.stopPropagation(); showSetup()">⚙ settings</button>
+<button class="settings-btn" id="settings-btn" style="display:none" onclick="showSetup()">⚙ settings</button>
 
 <script>
 const PROXY = "https://corsproxy.io/?url=";
@@ -276,12 +294,20 @@ function extractTitle(page) {
 }
 
 function extractSystem(page) {
+  // Try all common property types for "Systeem"
   const prop = page.properties["Systeem"];
-  if (!prop) return "";
+  if (!prop) {
+    // Log available properties to help debug
+    console.log("Available properties:", Object.keys(page.properties));
+    return "";
+  }
+  console.log("Systeem prop type:", prop.type, prop);
   if (prop.type === "select") return prop.select?.name || "";
   if (prop.type === "multi_select") return prop.multi_select.map(s => s.name).join(", ");
   if (prop.type === "rich_text") return prop.rich_text.map(t => t.plain_text).join("") || "";
   if (prop.type === "title") return prop.title.map(t => t.plain_text).join("") || "";
+  if (prop.type === "formula") return prop.formula?.string || prop.formula?.number?.toString() || "";
+  if (prop.type === "rollup") return "";
   return "";
 }
 
@@ -296,6 +322,7 @@ function renderGame(game, config) {
   const name   = extractTitle(game);
   const system = extractSystem(game);
   const cover  = extractCover(game);
+  const url    = game.url || "#";
 
   // Cover
   const coverEl = document.getElementById("w-cover");
@@ -313,16 +340,21 @@ function renderGame(game, config) {
   }
   coverEl.classList.add("fade-in");
 
-  // Name
+  // Name — clicking opens Notion page
   const nameEl = document.getElementById("w-name");
   nameEl.classList.remove("fade-in");
   void nameEl.offsetWidth;
   nameEl.textContent = name;
+  nameEl.href = url;
   nameEl.classList.add("fade-in");
 
   // System
   const sysEl = document.getElementById("w-system");
-  sysEl.innerHTML = system ? `(<span>${system}</span>)` : "";
+  if (system) {
+    sysEl.innerHTML = `(<span>${system}</span>)`;
+  } else {
+    sysEl.innerHTML = "";
+  }
 
   // Tag
   const mode = config.refreshMode;
