@@ -79,7 +79,8 @@
   /* Widget screen */
   #widget {
     display: none;
-    text-align: center;
+    width: 100%;
+    max-width: 420px;
     cursor: pointer;
     user-select: none;
   }
@@ -89,51 +90,91 @@
     letter-spacing: .16em;
     text-transform: uppercase;
     color: #333;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .w-cover {
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 10px;
+    overflow: hidden;
     margin-bottom: 16px;
+    background: #111;
+  }
+
+  .w-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .w-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    color: #1a1a1a;
+    background: linear-gradient(135deg, #111 0%, #0a0a0a 100%);
   }
 
   .w-name {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(36px, 9vw, 64px);
+    font-size: clamp(32px, 8vw, 52px);
     line-height: 1;
     color: #f0f0f0;
-    margin-bottom: 10px;
-    transition: opacity .3s;
+    margin-bottom: 6px;
+    text-align: center;
   }
 
   .w-system {
-    font-size: 15px;
+    font-size: 14px;
     color: #444;
     letter-spacing: .04em;
+    text-align: center;
   }
 
   .w-system span { color: #e8ff47; }
 
   .w-hint {
-    margin-top: 28px;
+    margin-top: 20px;
     font-size: 10px;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: #222;
+    color: #1a1a1a;
+    text-align: center;
   }
 
+  .shimmer {
+    background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
   .fade-in { animation: fadeIn .5s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   .settings-btn {
     position: fixed;
-    bottom: 16px;
-    right: 16px;
+    bottom: 14px;
+    right: 14px;
     font-size: 10px;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: #222;
+    color: #1a1a1a;
     cursor: pointer;
     background: none;
     border: none;
+    transition: color .2s;
   }
 
-  .settings-btn:hover { color: #555; }
+  .settings-btn:hover { color: #444; }
 </style>
 </head>
 <body>
@@ -166,14 +207,17 @@
 </div>
 
 <!-- WIDGET -->
-<div id="widget">
+<div id="widget" onclick="reroll()">
   <p class="w-tag" id="w-tag">🎮 Random Game</p>
+  <div class="w-cover" id="w-cover">
+    <div class="w-cover-placeholder">?</div>
+  </div>
   <div class="w-name" id="w-name">—</div>
   <div class="w-system" id="w-system"></div>
   <p class="w-hint">tap to reroll</p>
 </div>
 
-<button class="settings-btn" id="settings-btn" style="display:none" onclick="showSetup()">⚙ settings</button>
+<button class="settings-btn" id="settings-btn" style="display:none" onclick="event.stopPropagation(); showSetup()">⚙ settings</button>
 
 <script>
 const PROXY = "https://corsproxy.io/?url=";
@@ -241,19 +285,46 @@ function extractSystem(page) {
   return "";
 }
 
+function extractCover(page) {
+  if (!page.cover) return null;
+  if (page.cover.type === "external") return page.cover.external.url;
+  if (page.cover.type === "file") return page.cover.file.url;
+  return null;
+}
+
 function renderGame(game, config) {
   const name   = extractTitle(game);
   const system = extractSystem(game);
+  const cover  = extractCover(game);
 
+  // Cover
+  const coverEl = document.getElementById("w-cover");
+  coverEl.classList.remove("fade-in");
+  void coverEl.offsetWidth;
+  coverEl.innerHTML = "";
+  if (cover) {
+    const img = document.createElement("img");
+    img.src = cover;
+    img.alt = name;
+    img.onerror = () => { coverEl.innerHTML = `<div class="w-cover-placeholder">${name[0] || "?"}</div>`; };
+    coverEl.appendChild(img);
+  } else {
+    coverEl.innerHTML = `<div class="w-cover-placeholder">${name[0] || "?"}</div>`;
+  }
+  coverEl.classList.add("fade-in");
+
+  // Name
   const nameEl = document.getElementById("w-name");
   nameEl.classList.remove("fade-in");
   void nameEl.offsetWidth;
   nameEl.textContent = name;
   nameEl.classList.add("fade-in");
 
+  // System
   const sysEl = document.getElementById("w-system");
   sysEl.innerHTML = system ? `(<span>${system}</span>)` : "";
 
+  // Tag
   const mode = config.refreshMode;
   document.getElementById("w-tag").textContent =
     mode === "daily"  ? "🎮 Game of the Day" :
@@ -273,6 +344,8 @@ async function loadWidget(config, forceReroll) {
 
   document.getElementById("w-name").textContent = "Loading...";
   document.getElementById("w-system").innerHTML = "";
+  document.getElementById("w-cover").innerHTML =
+    `<div class="w-cover-placeholder shimmer" style="width:100%;height:100%"></div>`;
 
   try {
     const games = await fetchAllGames(config.apiKey, config.dbId);
@@ -282,28 +355,12 @@ async function loadWidget(config, forceReroll) {
     renderGame(game, config);
   } catch (err) {
     document.getElementById("w-name").textContent = "Error";
-    document.getElementById("w-system").innerHTML = `<span style="color:#ff6b6b;font-size:12px">${err.message}</span>`;
+    document.getElementById("w-system").innerHTML =
+      `<span style="color:#ff6b6b;font-size:12px">${err.message}</span>`;
   }
 }
 
-// Tap anywhere on widget to reroll
-document.getElementById("widget")?.addEventListener("click", () => {
-  loadWidget(getConfig(), true);
-});
-
-async function saveAndLoad() {
-  const apiKey      = document.getElementById("api-key").value.trim();
-  const dbId        = document.getElementById("db-id").value.trim();
-  const refreshMode = document.getElementById("refresh-mode").value;
-  const errEl       = document.getElementById("error-msg");
-  errEl.textContent = "";
-
-  if (!apiKey || !dbId) { errEl.textContent = "Both fields are required."; return; }
-
-  const config = { apiKey, dbId, refreshMode };
-  saveConfig(config);
-  await loadWidget(config, true);
-}
+async function reroll() { await loadWidget(getConfig(), true); }
 
 function showSetup() {
   const c = getConfig();
@@ -313,6 +370,18 @@ function showSetup() {
   document.getElementById("widget").style.display = "none";
   document.getElementById("settings-btn").style.display = "none";
   document.getElementById("setup").style.display = "block";
+}
+
+async function saveAndLoad() {
+  const apiKey      = document.getElementById("api-key").value.trim();
+  const dbId        = document.getElementById("db-id").value.trim();
+  const refreshMode = document.getElementById("refresh-mode").value;
+  const errEl       = document.getElementById("error-msg");
+  errEl.textContent = "";
+  if (!apiKey || !dbId) { errEl.textContent = "Both fields are required."; return; }
+  const config = { apiKey, dbId, refreshMode };
+  saveConfig(config);
+  await loadWidget(config, true);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
