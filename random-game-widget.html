@@ -9,7 +9,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: transparent;
+    background: #191919;
     color: #f0f0f0;
     font-family: 'DM Sans', sans-serif;
     min-height: 100vh;
@@ -418,7 +418,18 @@ async function saveAndLoad() {
 
 window.addEventListener("DOMContentLoaded", () => {
   const config = getConfig();
-  if (config.apiKey && config.dbId) loadWidget(config, false);
+  if (config.apiKey && config.dbId) {
+    loadWidget(config, false);
+  } else {
+    // Hardcoded fallback
+    const defaultConfig = {
+      apiKey: "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",
+      dbId: "1ce4da55eddb80619dd9d50bc7f9d99d",
+      refreshMode: "always"
+    };
+    saveConfig(defaultConfig);
+    loadWidget(defaultConfig, false);
+  }
 });
 </script>
 </body>
