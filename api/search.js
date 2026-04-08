@@ -1,4 +1,8 @@
-module.exports = async function handler(req, res) {
+export const config = {
+  runtime: "nodejs20.x",
+};
+
+export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -13,7 +17,9 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: "Missing NOTION_TOKEN or NOTION_DATABASE_ID." });
   }
 
-  const { query = "" } = req.body || {};
+  let body = {};
+  try { body = req.body || {}; } catch {}
+  const query = body.query || "";
 
   const notionRes = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
     method: "POST",
@@ -23,14 +29,11 @@ module.exports = async function handler(req, res) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      filter: {
-        property: "Game",
-        title: { contains: query }
-      },
+      filter: { property: "Game", title: { contains: query } },
       page_size: 25
     })
   });
 
   const data = await notionRes.json();
   return res.status(notionRes.status).json(data);
-};
+}
