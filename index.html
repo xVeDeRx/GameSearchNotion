@@ -81,7 +81,7 @@
 <body>
 
 <div class="search-wrap">
-  <input type="text" id="q" placeholder="Search Game…" oninput="onInput()" autocomplete="off"/>
+  <input type="text" id="q" placeholder="Search by name…" oninput="onInput()" autocomplete="off"/>
 </div>
 <div class="status" id="status"></div>
 <div class="results" id="results"></div>
@@ -106,14 +106,13 @@
     results.innerHTML = '';
 
     try {
-      const res = await fetch('/.netlify/functions/search', {
+      const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: q })
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message || `Error ${res.status}`);
 
       const pages = data.results || [];
