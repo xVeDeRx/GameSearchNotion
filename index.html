@@ -10,14 +10,9 @@
 
   body {
     font-family: 'IBM Plex Mono', monospace;
-    background: #fff;
+    background: #191919;
     padding: 20px;
-    color: #111;
-  }
-
-  .search-wrap {
-    position: relative;
-    margin-bottom: 12px;
+    color: #e3e3e3;
   }
 
   input {
@@ -25,25 +20,26 @@
     padding: 10px 14px;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 0.88rem;
-    border: 1.5px solid #ddd;
+    border: 1.5px solid #333;
     border-radius: 6px;
     outline: none;
-    color: #111;
-    background: #fff;
+    color: #e3e3e3;
+    background: #252525;
+    margin-bottom: 12px;
     transition: border-color 0.15s;
   }
 
-  input:focus { border-color: #111; }
-  input::placeholder { color: #bbb; }
+  input:focus { border-color: #555; }
+  input::placeholder { color: #555; }
 
   .status {
     font-size: 0.7rem;
-    color: #aaa;
+    color: #555;
     margin-bottom: 10px;
     min-height: 16px;
   }
 
-  .status.error { color: #c0392b; }
+  .status.error { color: #e05555; }
 
   .results { display: flex; flex-direction: column; gap: 6px; }
 
@@ -52,23 +48,24 @@
     align-items: center;
     justify-content: space-between;
     padding: 9px 12px;
-    border: 1px solid #eee;
+    border: 1px solid #2e2e2e;
     border-radius: 6px;
     text-decoration: none;
-    color: #111;
+    color: #e3e3e3;
     font-size: 0.84rem;
+    background: #252525;
     transition: border-color 0.12s, background 0.12s;
     animation: fadeIn 0.15s ease both;
   }
 
-  a.result:hover { border-color: #111; background: #f9f9f9; }
+  a.result:hover { border-color: #555; background: #2e2e2e; }
 
-  .arrow { color: #bbb; font-size: 0.8rem; }
-  a.result:hover .arrow { color: #111; }
+  .arrow { color: #444; font-size: 0.8rem; }
+  a.result:hover .arrow { color: #aaa; }
 
   .empty {
     font-size: 0.78rem;
-    color: #bbb;
+    color: #555;
     padding: 12px 0;
   }
 
@@ -80,9 +77,7 @@
 </head>
 <body>
 
-<div class="search-wrap">
-  <input type="text" id="q" placeholder="Search by name…" oninput="onInput()" autocomplete="off"/>
-</div>
+<input type="text" id="q" placeholder="Search games…" oninput="onInput()" autocomplete="off"/>
 <div class="status" id="status"></div>
 <div class="results" id="results"></div>
 
@@ -112,8 +107,15 @@
         body: JSON.stringify({ query: q })
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || `Error ${res.status}`);
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error('Function not reachable — check deployment');
+      }
+
+      if (!res.ok) throw new Error(data.message || data.error || `Error ${res.status}`);
 
       const pages = data.results || [];
 
