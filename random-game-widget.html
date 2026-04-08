@@ -22,7 +22,7 @@
   /* Setup screen */
   #setup {
     width: 100%;
-    max-width: 420px;
+    max-width: 480px;
     background: #111;
     padding: 28px;
     border-radius: 12px;
@@ -32,9 +32,41 @@
     font-family: 'Bebas Neue', sans-serif;
     font-size: 48px;
     color: #e8ff47;
-    margin-bottom: 24px;
+    margin-bottom: 8px;
     line-height: 1;
   }
+
+  .setup-sub {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .setup-sub code {
+    background: #1a1a1a;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #e8ff47;
+    word-break: break-all;
+  }
+
+  .url-preview {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: #888;
+    word-break: break-all;
+    line-height: 1.7;
+  }
+
+  .url-preview .base { color: #555; }
+  .url-preview .param { color: #e8ff47; }
+  .url-preview .value { color: #f0f0f0; }
 
   .field { margin-bottom: 14px; }
 
@@ -80,7 +112,24 @@
 
   .btn:hover { opacity: .88; }
 
+  .copy-url {
+    width: 100%;
+    background: #1a1a1a;
+    color: #e8ff47;
+    border: 1px solid #2a2a2a;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 11px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: border-color .2s;
+  }
+
+  .copy-url:hover { border-color: #e8ff47; }
+
   #error-msg { font-size: 12px; color: #ff6b6b; margin-top: 8px; min-height: 16px; }
+  #copy-msg { font-size: 12px; color: #4cff91; margin-top: 8px; min-height: 16px; text-align: center; }
 
   /* Widget screen */
   #widget {
@@ -93,7 +142,7 @@
     font-size: 10px;
     letter-spacing: .16em;
     text-transform: uppercase;
-    color: #888;
+    color: #555;
     margin-bottom: 14px;
     text-align: center;
   }
@@ -147,7 +196,7 @@
 
   .w-system {
     font-size: 14px;
-    color: #888;
+    color: #555;
     letter-spacing: .04em;
     text-align: center;
     margin-bottom: 18px;
@@ -160,9 +209,10 @@
     font-size: 10px;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: #333;
+    color: #2a2a2a;
     text-align: center;
     cursor: pointer;
+    transition: color .2s;
   }
 
   .w-hint:hover { color: #555; }
@@ -200,6 +250,7 @@
 <!-- SETUP -->
 <div id="setup">
   <h1 class="setup-title">Random<br>Game</h1>
+  <p class="setup-sub">Fill in your details below. The widget will generate a URL — paste that URL into Notion as an embed. Your credentials stay in the URL, never in the code.</p>
 
   <div class="field">
     <label>Notion API Key</label>
@@ -221,7 +272,9 @@
   </div>
 
   <div id="error-msg"></div>
-  <button class="btn" onclick="saveAndLoad()">Load Widget →</button>
+  <button class="btn" onclick="generateAndLoad()">Load Widget →</button>
+  <button class="copy-url" onclick="copyUrl()">📋 Copy Embed URL for Notion</button>
+  <div id="copy-msg"></div>
 </div>
 
 <!-- WIDGET -->
@@ -240,21 +293,38 @@
 <script>
 const PROXY = "https://corsproxy.io/?url=";
 function notionUrl(p) { return PROXY + encodeURIComponent("https://api.notion.com/v1" + p); }
-function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
-function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
-function getConfig() { return load("ngw_config") || {}; }
-function saveConfig(c) { save("ngw_config", c); }
 
+// Read params from URL
+function getParams() {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    apiKey: p.get("key") || "",
+    dbId: p.get("db") || "",
+    refreshMode: p.get("mode") || "always"
+  };
+}
+
+// Build embed URL
+function buildUrl(apiKey, dbId, refreshMode) {
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?key=${encodeURIComponent(apiKey)}&db=${encodeURIComponent(dbId)}&mode=${refreshMode}`;
+}
+
+// Cache (session only, as fallback for daily/weekly)
 function getCachedGame(mode) {
   if (mode === "always") return null;
-  const c = load("ngw_cache");
-  if (!c) return null;
-  const age = Date.now() - c.ts;
-  if (mode === "daily" && age < 86400000) return c.game;
-  if (mode === "weekly" && age < 604800000) return c.game;
+  try {
+    const c = JSON.parse(sessionStorage.getItem("ngw_cache"));
+    if (!c) return null;
+    const age = Date.now() - c.ts;
+    if (mode === "daily" && age < 86400000) return c.game;
+    if (mode === "weekly" && age < 604800000) return c.game;
+  } catch(e) {}
   return null;
 }
-function setCachedGame(game) { save("ngw_cache", { ts: Date.now(), game }); }
+function setCachedGame(game) {
+  try { sessionStorage.setItem("ngw_cache", JSON.stringify({ ts: Date.now(), game })); } catch(e) {}
+}
 
 async function fetchAllGames(apiKey, dbId) {
   let games = [], cursor, tries = 0;
@@ -294,20 +364,13 @@ function extractTitle(page) {
 }
 
 function extractSystem(page) {
-  // Try all common property types for "Systeem"
   const prop = page.properties["Systeem"];
-  if (!prop) {
-    // Log available properties to help debug
-    console.log("Available properties:", Object.keys(page.properties));
-    return "";
-  }
-  console.log("Systeem prop type:", prop.type, prop);
+  if (!prop) return "";
   if (prop.type === "select") return prop.select?.name || "";
   if (prop.type === "multi_select") return prop.multi_select.map(s => s.name).join(", ");
   if (prop.type === "rich_text") return prop.rich_text.map(t => t.plain_text).join("") || "";
   if (prop.type === "title") return prop.title.map(t => t.plain_text).join("") || "";
-  if (prop.type === "formula") return prop.formula?.string || prop.formula?.number?.toString() || "";
-  if (prop.type === "rollup") return "";
+  if (prop.type === "formula") return prop.formula?.string || "";
   return "";
 }
 
@@ -324,7 +387,6 @@ function renderGame(game, config) {
   const cover  = extractCover(game);
   const url    = game.url || "#";
 
-  // Cover
   const coverEl = document.getElementById("w-cover");
   coverEl.classList.remove("fade-in");
   void coverEl.offsetWidth;
@@ -340,7 +402,6 @@ function renderGame(game, config) {
   }
   coverEl.classList.add("fade-in");
 
-  // Name — clicking opens Notion page
   const nameEl = document.getElementById("w-name");
   nameEl.classList.remove("fade-in");
   void nameEl.offsetWidth;
@@ -348,15 +409,9 @@ function renderGame(game, config) {
   nameEl.href = url;
   nameEl.classList.add("fade-in");
 
-  // System
   const sysEl = document.getElementById("w-system");
-  if (system) {
-    sysEl.innerHTML = `(<span>${system}</span>)`;
-  } else {
-    sysEl.innerHTML = "";
-  }
+  sysEl.innerHTML = system ? `(<span>${system}</span>)` : "";
 
-  // Tag
   const mode = config.refreshMode;
   document.getElementById("w-tag").textContent =
     mode === "daily"  ? "🎮 Game of the Day" :
@@ -392,43 +447,51 @@ async function loadWidget(config, forceReroll) {
   }
 }
 
-async function reroll() { await loadWidget(getConfig(), true); }
+async function reroll() { await loadWidget(getParams(), true); }
+
+function getFormValues() {
+  return {
+    apiKey: document.getElementById("api-key").value.trim(),
+    dbId: document.getElementById("db-id").value.trim(),
+    refreshMode: document.getElementById("refresh-mode").value
+  };
+}
+
+async function generateAndLoad() {
+  const { apiKey, dbId, refreshMode } = getFormValues();
+  const errEl = document.getElementById("error-msg");
+  errEl.textContent = "";
+  if (!apiKey || !dbId) { errEl.textContent = "Both fields are required."; return; }
+  await loadWidget({ apiKey, dbId, refreshMode }, true);
+}
+
+async function copyUrl() {
+  const { apiKey, dbId, refreshMode } = getFormValues();
+  const errEl = document.getElementById("error-msg");
+  const copyMsg = document.getElementById("copy-msg");
+  errEl.textContent = "";
+  copyMsg.textContent = "";
+  if (!apiKey || !dbId) { errEl.textContent = "Both fields are required."; return; }
+  const url = buildUrl(apiKey, dbId, refreshMode);
+  try {
+    await navigator.clipboard.writeText(url);
+    copyMsg.textContent = "✓ URL copied! Paste it as an embed in Notion.";
+  } catch(e) {
+    // Fallback for browsers that block clipboard
+    prompt("Copy this URL and paste it as an embed in Notion:", url);
+  }
+}
 
 function showSetup() {
-  const c = getConfig();
-  document.getElementById("api-key").value = c.apiKey || "";
-  document.getElementById("db-id").value = c.dbId || "";
-  document.getElementById("refresh-mode").value = c.refreshMode || "always";
   document.getElementById("widget").style.display = "none";
   document.getElementById("settings-btn").style.display = "none";
   document.getElementById("setup").style.display = "block";
 }
 
-async function saveAndLoad() {
-  const apiKey      = document.getElementById("api-key").value.trim();
-  const dbId        = document.getElementById("db-id").value.trim();
-  const refreshMode = document.getElementById("refresh-mode").value;
-  const errEl       = document.getElementById("error-msg");
-  errEl.textContent = "";
-  if (!apiKey || !dbId) { errEl.textContent = "Both fields are required."; return; }
-  const config = { apiKey, dbId, refreshMode };
-  saveConfig(config);
-  await loadWidget(config, true);
-}
-
 window.addEventListener("DOMContentLoaded", () => {
-  const config = getConfig();
+  const config = getParams();
   if (config.apiKey && config.dbId) {
     loadWidget(config, false);
-  } else {
-    // Hardcoded fallback
-    const defaultConfig = {
-      apiKey: "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",
-      dbId: "1ce4da55eddb80619dd9d50bc7f9d99d",
-      refreshMode: "always"
-    };
-    saveConfig(defaultConfig);
-    loadWidget(defaultConfig, false);
   }
 });
 </script>
